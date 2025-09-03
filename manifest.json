@@ -1,12 +1,12 @@
 {
-    "name": "Assistente de Batalha GBL",
-    "short_name": "GBL Assist",
-    "start_url": "https://gateiro.github.io/pokemon-team/",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#e63946",
-    "description": "Monte times competitivos para a Liga de Batalha GO com ajuda da IA.",
-    "icons": [
+  "name": "Assistente de Batalha GBL",
+  "short_name": "GBL Assist",
+  "start_url": "https://gateiro.github.io/pokemon-team/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e63946",
+  "description": "Monte times competitivos para a Liga de Batalha GO com ajuda da IA.",
+  "icons": [
     {
       "src": "windows11/SmallTile.scale-100.png",
       "sizes": "71x71"
@@ -455,5 +455,6 @@
       "src": "ios/1024.png",
       "sizes": "1024x1024"
     }
-  ]
+  ],
+  "scope": "https://gateiro.github.io/pokemon-team/"
 }
