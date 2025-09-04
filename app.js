@@ -1,6 +1,17 @@
 // Aguarda o HTML carregar completamente antes de rodar o script
 document.addEventListener('DOMContentLoaded', () => {
 
+    //Verifica se à um SW ativo
+    if(typeof navigator.serviceWorker !== 'undefined'){
+        navigator.serviceWorker.register('pwabuilder-sw.js')
+    }
+    //Configurando notificações
+    if('setAppBadge' in navigator){
+        navigator.setAppBadge(1);
+    }
+    //Solicita ao usuário permissão para enviar notificações.
+    Notification.requestPermission();
+
     const API_KEY = {APIKEY}
     const URL_API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
     
@@ -20,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Passo 1: Capturar os dados da interface
         const liga = ligaSelect.value;
-        const pokemonBase = pokemonInput.value.trim();
+        const pokemonBase = pokemonInput.value.trim() || "Nenhum";
         console.log(`Liga: ${liga}, Pokémon Base: ${pokemonBase}`);
         
         // Exibe uma mensagem de "carregando..." para o usuário
@@ -28,35 +39,64 @@ document.addEventListener('DOMContentLoaded', () => {
         resultadoDiv.innerHTML = "Consultando os melhores estrategistas... Por favor, aguarde.";
 
 
-        // --- AQUI COMEÇA A ORQUESTRAÇÃO DOS AGENTES ---
+        //ORGANIZAÇÃO DOS AGENTES
 
-        // Passo 2: Chamar o Agente 1 (Pesquisador de Meta em Tempo Real)
-        // (Futura implementação: chamar a API do Gemini com um prompt de busca)
-        console.log("Passo 2: Chamando Agente 1 para pesquisar o meta...");
-        // const metaReport = await agentePesquisador(liga);
+        try{
+            // Passo 2: Chamar o Agente 1 (Pesquisador de Meta em Tempo Real)
+            console.log("Chamando Agente 1...");
+            const metaReport = await agentePesquisador(liga);
+            console.log("---Relatório do Agente 1 Recebido ---");
+            console.log(metaReport);
+
+            resultadoDiv.innerHTML = "Relatório recebido!"
+
+            // Passo 3: Chamar o Agente 2 (Estrategista de Equipe)
+            console.log("Passo 3: Chamando Agente 2...");
+            const timeSugerido = await agenteEstrategista(metaReport, pokemonBase);
+            console.log("--- Time Sugerido pelo Agente 2 ---");
+            console.log(timeSugerido);
 
 
-        // Passo 3: Chamar o Agente 2 (Estrategista de Equipe)
-        // (Futura implementação: chamar a API do Gemini com o relatório do meta)
-        console.log("Passo 3: Chamando Agente 2 para montar o time...");
-        // const timeSugerido = await agenteEstrategista(metaReport, pokemonBase);
+        } catch (error) {
+            console.error("Ocorreu um erro na orquestração:", error);
+            resultadoDiv.innerHTML = `Houve um erro ao consultar a IA. Verifique a sua chave.`
+        }
 
-
-        // Passo 4: Buscar dados na PokéAPI para validar os ataques
-        // (Futura implementação: fazer chamadas na pokeapi.co para cada pokémon do timeSugerido)
-        console.log("Passo 4: Buscando dados na PokéAPI...");
-
-
-        // Passo 5: Chamar o Agente 3 (Mestre de Ataques e Táticas)
-        // (Futura implementação: chamar a API do Gemini com o time e os dados da PokéAPI)
-        console.log("Passo 5: Chamando Agente 3 para detalhar a estratégia...");
-        // const resultadoFinal = await agenteTatico(timeSugerido, dadosPokeAPI);
-        
-
-        // Passo 6: Exibir o resultado final na tela
-        console.log("Passo 6: Exibindo o resultado final.");
-        // resultadoDiv.innerHTML = resultadoFinal; 
     }
+
+
+    // ------ Definição dos Agentes -------
+
+    //Agente 1: Pesquisador
+    async function agentePesquisador(nomeDaLiga) {
+        const prompt = `
+        Você é um "Mestre de Batalha", um especialista mundial em Pokémon GO Battle League (GBL).
+        Sua tarefa é realizar uma busca na internet para encontrar os Pokémon mais fortes e mais usados na ${nomeDaLiga} em setembro de 2025.
+        Concentre sua busca em fontes confiáveis como "PvPoke", "GamePress" e "The Silph Road".
+        Resuma suas descobertas em um relatório objetivo e conciso. 
+        `;
+
+        //Habilitando a busca Web
+        const requestBody = {
+            contents: [{ parts: [{ text: prompt }] }],
+            tools: [{"google_search_retrieval": {} }]
+        };
+
+        const response = await fetch(URL_API, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) throw new Error(`Erro na API (Agente 1): ${response.statusText}`);
+        const data = await response.json();
+        return data.candidates[0].content.parts[0].text;
+    }
+
+    //Agente 2: Estrategista de Equipe
+
+
+
 });
 
 // --- REGISTRO DO SERVICE WORKER ---
